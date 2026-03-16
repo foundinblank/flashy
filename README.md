@@ -12,7 +12,8 @@ No dependencies. No skills. No context token overhead. Just hooks and one bash s
 ## Install
 
 ```bash
-claude plugin add /path/to/flashy
+claude plugin marketplace add foundinblank/flashy
+claude plugin install flashy@foundinblank/flashy
 ```
 
 That's it. Zero config required — Flashy auto-detects your terminal's background color and computes an adaptive flash color.

@@ -1,0 +1,10 @@
+{
+  "name": "flashy",
+  "description": "Visual terminal flash notifications for Claude Code",
+  "plugins": [
+    {
+      "name": "flashy",
+      "path": "."
+    }
+  ]
+}
