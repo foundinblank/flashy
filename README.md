@@ -85,4 +85,4 @@ cp /path/to/flashy/config.default ~/.config/flashy/config
 
 ## License
 
-MIT
+MIT License - see LICENSE file for details
