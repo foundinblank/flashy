@@ -1,5 +1,8 @@
 {
   "name": "flashy",
+  "metadata": {
+    "description": "Visual terminal flash notifications for Claude Code"
+  },
   "owner": {
     "name": "Adam Stone"
   },

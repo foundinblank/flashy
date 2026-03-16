@@ -2,12 +2,12 @@
 
 Visual terminal flash notifications for Claude Code.
 
-When Claude finishes a turn or detects you've stepped away, Flashy pulses your terminal's background color — a subtle, theme-aware signal that works without sound.
+When Claude finishes a turn or detects you've stepped away, Flashy pulses your terminal's background color: a subtle, theme-aware signal that works without sound.
 
 - **Stop event** → 1 pulse (subtle "I'm done")
 - **Notification event** → 2 pulses (stronger "come back")
 
-No dependencies. No skills. No context token overhead. Just hooks and one bash script.
+No dependencies, skills, or context token overhead. Just hooks and one bash script.
 
 ## Install
 
@@ -16,7 +16,7 @@ claude plugin marketplace add foundinblank/flashy
 claude plugin install flashy@foundinblank/flashy
 ```
 
-That's it. Zero config required — Flashy auto-detects your terminal's background color and computes an adaptive flash color.
+Flashy auto-detects your terminal's background color and computes an adaptive flash color.
 
 ## Configuration
 
