@@ -1,0 +1,28 @@
+# Flashy — terminal flash notifications for Claude Code
+# Copy to ~/.config/flashy/config (or $XDG_CONFIG_HOME/flashy/config) and edit.
+# Any value omitted falls back to the default shown here.
+
+# Set to false to disable flashing without uninstalling
+ENABLED=true
+
+# Pulses per event type
+STOP_PULSES=1
+NOTIFICATION_PULSES=2
+
+# Timing (seconds)
+PULSE_DURATION=0.22
+PULSE_GAP=0.1
+
+# Color shift intensity (0-255 RGB steps)
+# Higher = more visible flash. Lower = subtler.
+SHIFT=50
+
+# Fallback background color (used when auto-detect fails and no file found)
+# Set this to your terminal's background color if flashes look wrong.
+FALLBACK_COLOR="#1a1b26"
+
+# Background color file pattern (advanced — for multi-theme setups)
+# If your shell writes the current bg color to a file, set the pattern here.
+# Use {tty} as placeholder for the TTY name (e.g., ttys002).
+# Example: ~/.terminal-bg-color.{tty}
+BG_COLOR_FILE=""

@@ -1,0 +1,25 @@
+{
+  "description": "Visual terminal flash notifications for Claude Code",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/flash.sh\" stop"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/flash.sh\" notification"
+          }
+        ]
+      }
+    ]
+  }
+}

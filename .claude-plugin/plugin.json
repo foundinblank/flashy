@@ -1,0 +1,9 @@
+{
+  "name": "flashy",
+  "description": "Visual terminal flash notifications for Claude Code — pulses your terminal background on Stop and Notification events",
+  "version": "0.1.0",
+  "author": {
+    "name": "Adam Stone"
+  },
+  "keywords": ["notifications", "terminal", "visual", "flash", "accessibility"]
+}
