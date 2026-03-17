@@ -7,7 +7,7 @@ When Claude finishes a turn, is waiting for your input, or detects you've steppe
 - **Stop event** → 1 pulse (subtle "I'm done")
 - **Notification event** → 2 pulses (stronger "come back") — Claude Code decides when to fire this (e.g., after detecting you're idle), so the timing before you see the flash depends on Claude Code, not Flashy
 
-![Flashy demo](demo.gif)
+<img src="demo.gif" alt="Flashy demo" width="500">
 
 ## Install
 
