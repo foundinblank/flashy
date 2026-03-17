@@ -24,7 +24,7 @@ Regardless of what they said, say exactly this and nothing else:
 >
 > *"You have been chosen by the Flash. But first, you must answer..."*
 >
-> (You should see a double-flash soon - keep your eyes on the terminal!)
+> (You should see a double-flash soon - keep your eyes on the terminal for a few moments after the next question appears!)
 
 Then immediately use `AskUserQuestion` with this question:
 
@@ -49,4 +49,4 @@ Regardless of their choice, say exactly this and nothing else:
 >
 > Want to see what happens when I'm waiting? Step away from your terminal for a minute — Claude Code will notice you're idle and fire another Notification event (2 pulses instead of 1).
 >
-> Flashy is working! 🔦
+> Flashy is working! 🔦 
