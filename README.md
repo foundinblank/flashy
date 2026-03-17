@@ -1,4 +1,4 @@
-# Flashy
+# ⚡ Flashy
 
 Visual terminal flash notifications for Claude Code.
 
