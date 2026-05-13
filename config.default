@@ -30,7 +30,8 @@ BG_COLOR_FILE=""
 # --- Apple Watch / Pushover notifications ---
 # Sends a push (phone + Apple Watch) via https://pushover.net on each event.
 # Leave PUSHOVER_USER_KEY or PUSHOVER_APP_TOKEN empty to disable.
-
+# Leave PUSHOVER_USER_KEY or PUSHOVER_APP_TOKEN empty to disable.
+# ⚠️  Do NOT commit real keys to git — put them in ~/.config/flashy/config only.
 PUSHOVER_ENABLED=true
 PUSHOVER_USER_KEY=""
 PUSHOVER_APP_TOKEN=""
