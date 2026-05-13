@@ -45,7 +45,8 @@ cp /path/to/flashy/config.default ~/.config/flashy/config
 | `FALLBACK_COLOR` | `#1a1b26` | Used when auto-detect fails |
 | `BG_COLOR_FILE` | *(empty)* | Per-TTY bg color file pattern. Use `{tty}` placeholder |
 | `PUSHOVER_ENABLED` | `true` | Set `false` to skip Pushover even if creds are set |
-| `PUSHOVER_USER_KEY` | *(empty)* | Your Pushover user key — leave empty to disable pushes |
+| | | **Pushover** — see [setup instructions](#apple-watch--phone-notifications) below |
+| `PUSHOVER_ENABLED` | `true` | Set `false` to skip Pushover even if creds are set |
 | `PUSHOVER_APP_TOKEN` | *(empty)* | Your Pushover application API token |
 | `PUSHOVER_TITLE` | `Claude Code` | Push notification title |
 | `PUSHOVER_STOP_MESSAGE` | `Claude finished a turn` | Body for Stop events |
