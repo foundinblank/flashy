@@ -14,8 +14,8 @@ Flashy is a Claude Code plugin that provides visual terminal flash notifications
 
 The plugin registers two Claude Code hooks:
 
-- **Stop** — fires every time Claude finishes a turn. Default: 1 pulse.
-- **Notification** — fires when Claude's idle detection thinks you've stepped away. Default: 2 pulses.
+- **Stop** — fires every time Claude finishes a turn. Default: 1 pulse. Suppressed when Claude Code reports background agents or scheduled crons still running (see [Stop Suppression](#stop-suppression-v020)).
+- **Notification** — fires for permission prompts, idle prompts, and "needs input" notifications (matcher-narrowed to these three; Claude Code emits other Notification subtypes Flashy intentionally ignores). Default: 2 pulses.
 
 Each pulse changes the terminal background color briefly (via OSC 11 escape sequence), then restores the original color. The flash color is computed adaptively: dark themes get a lighter flash, light themes get a darker flash.
 
@@ -28,12 +28,14 @@ Each pulse changes the terminal background color briefly (via OSC 11 escape sequ
 ├── hooks/
 │   ├── hooks.json               # Hook event definitions (Stop + Notification)
 │   └── flash.sh                 # Core flash script
+├── tests/
+│   └── test_flash_stop_suppression.sh  # Pure-bash test suite (stop suppression + timeout reliance)
 ├── config.default               # Documented default config (reference only)
 ├── README.md                    # Install, config reference, troubleshooting
 └── LICENSE                      # MIT
 ```
 
-No skills, no MCP servers, no external dependencies. Just hooks and one bash script.
+No skills, no MCP servers, no external dependencies. Just hooks and one bash script (plus a pure-bash test suite).
 
 ## Plugin Metadata
 
@@ -43,7 +45,7 @@ No skills, no MCP servers, no external dependencies. Just hooks and one bash scr
 {
   "name": "flashy",
   "description": "Visual terminal flash notifications for Claude Code — pulses your terminal background on Stop and Notification events",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Adam Stone"
   },
@@ -64,17 +66,20 @@ No skills, no MCP servers, no external dependencies. Just hooks and one bash scr
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/flash.sh\" stop"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/flash.sh\" stop",
+            "timeout": 2
           }
         ]
       }
     ],
     "Notification": [
       {
+        "matcher": "permission_prompt|idle_prompt|agent_needs_input",
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/flash.sh\" notification"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/flash.sh\" notification",
+            "timeout": 2
           }
         ]
       }
@@ -84,6 +89,8 @@ No skills, no MCP servers, no external dependencies. Just hooks and one bash scr
 ```
 
 The script receives the event name as `$1` and looks up the corresponding pulse count from config. This keeps all user-facing tunables in the config file rather than in hook definitions.
+
+`timeout: 2` bounds each hook at 2 seconds so a stuck `flash.sh` (e.g. a terminal that never responds to the OSC 11 query) can't stall Claude Code. The Notification `matcher` narrows delivery to the three notification types Flashy actually cares about (permission prompts, idle prompts, "needs input"), rather than every Notification subtype Claude Code emits.
 
 ## Configuration
 
@@ -261,6 +268,39 @@ osc11_query() {
 
 Users on unsupported terminals set `FALLBACK_COLOR` in their config.
 
+## Stop Suppression (v0.2.0)
+
+Claude Code v2.1.145 added `background_tasks` and `session_crons` arrays to the Stop hook's stdin JSON, reporting background agents or scheduled crons still running after the visible turn ends. A stop flash means "Claude is done" — flashing while background work is still in flight is a false signal, so `flash.sh` suppresses the stop pulse when either array is confidently non-empty.
+
+Design constraints carried over from v0.1.0 ruled out the obvious approaches:
+
+- **No JSON parser, no new dependency.** A real parser would mean `jq`/`python`/`node`, breaking the pure-Bash, zero-dependency promise. Instead, `flash.sh` does a narrow regex scan for a literal top-level `"background_tasks": [ ... ]` / `"session_crons": [ ... ]` shape:
+
+  ```sh
+  SUPPRESS_PATTERN='"(background_tasks|session_crons)"[[:space:]]*:[[:space:]]*\[[[:space:]]*[^][:space:]]'
+  ```
+
+  This matches only when the array's first non-whitespace character isn't `]` — i.e., confidently non-empty. It is not a general parser: it doesn't track JSON nesting depth, so a string value elsewhere in the payload that happens to contain the literal text `"background_tasks": [x]` could produce a false positive. That trade-off is accepted because the alternative is a dependency or a hand-rolled parser, and the failure mode (an occasional missed flash) is low-stakes.
+
+- **Fail open on everything else.** Missing keys, empty arrays (`[]`), whitespace-only arrays (`[ \n ]`), a non-array value, malformed/truncated JSON, and empty or closed stdin all fall through to a normal flash. The pattern only *asserts* non-emptiness; it never asserts well-formedness, so anything it doesn't recognize can't accidentally suppress a real "done" flash.
+
+- **Never block manual use.** Stdin is only read when `[ ! -t 0 ]` — i.e., not a TTY. Running `./hooks/flash.sh stop` by hand from an interactive shell skips the read entirely and always flashes normally.
+
+- **No SubagentStop hook.** Flashy still only registers `Stop`, not `SubagentStop`. `SubagentStop` fires once per subagent completion, which would produce a flash per subagent rather than one per turn — noisy, and orthogonal to what a user waiting at the terminal cares about. The top-level `Stop` hook (with its new suppression) is the single source of truth for "is Claude done."
+
+### Test Seam
+
+Testing this purely through observed terminal flashes would mean asserting on `sleep` timing or actual OSC 11 output — fragile and explicitly disallowed. Instead, `flash.sh` exposes a narrow, explicit seam:
+
+```sh
+if [ "${FLASHY_TEST_SEAM:-}" = "flashy-test-seam-do-not-set-manually-9f13c2" ]; then
+  echo "FLASHY_TEST_RESULT=..."   # SUPPRESSED or PULSE count=N
+  exit 0
+fi
+```
+
+The seam only activates on an exact, non-trivial token — never a plausible value like `1` or `true` that could be set by accident via an inherited env var — and it prints the real suppress/pulse decision the production code path just computed, then exits before touching `/dev/tty` or sleeping. `tests/test_flash_stop_suppression.sh` drives this seam with realistic multi-line, nested-object JSON payloads over stdin and asserts on the printed decision.
+
 ## Terminal Compatibility
 
 | Terminal | OSC 11 Query | OSC 11 Set BG | Notes |
@@ -289,7 +329,7 @@ Users on unsupported terminals set `FALLBACK_COLOR` in their config.
 
 ## Design Decisions
 
-- **No dependencies**: pure bash, no jq/python/node. Runs everywhere.
+- **No dependencies**: pure bash, no jq/python/node — in production or tests. Runs everywhere.
 - **No skills**: zero context token overhead. The plugin is invisible during normal use.
 - **Shell-sourceable config**: natural for a bash plugin, no JSON parsing gymnastics.
 - **Adaptive flash color**: computed from actual background, not a fixed color. Works with any theme without configuration.

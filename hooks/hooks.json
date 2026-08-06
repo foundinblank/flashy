@@ -6,17 +6,20 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/flash.sh\" stop"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/flash.sh\" stop",
+            "timeout": 2
           }
         ]
       }
     ],
     "Notification": [
       {
+        "matcher": "permission_prompt|idle_prompt|agent_needs_input",
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/flash.sh\" notification"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/flash.sh\" notification",
+            "timeout": 2
           }
         ]
       }

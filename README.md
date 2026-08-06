@@ -4,8 +4,8 @@ Visual terminal flash notifications for Claude Code.
 
 When Claude finishes a turn, is waiting for your input, or detects you've stepped away, Flashy pulses your terminal's background color.
 
-- **Stop event** → 1 pulse (subtle "I'm done")
-- **Notification event** → 2 pulses (stronger "come back") — Claude Code decides when to fire this (e.g., after detecting you're idle), so the timing before you see the flash depends on Claude Code, not Flashy
+- **Stop event** → 1 pulse (subtle "I'm done"). Suppressed if Claude Code reports background agents or scheduled crons still running — see [Stop Suppression](#stop-suppression) below.
+- **Notification event** → 2 pulses (stronger "come back"), limited to permission prompts, idle prompts, and "needs input" notifications — Claude Code decides when to fire this (e.g., after detecting you're idle), so the timing before you see the flash depends on Claude Code, not Flashy
 
 <p align="center">
   <img src="demo.gif" alt="Flashy demo" width="500">
@@ -44,6 +44,12 @@ cp /path/to/flashy/config.default ~/.config/flashy/config
 | `FALLBACK_COLOR` | `#1a1b26` | Used when auto-detect fails |
 | `BG_COLOR_FILE` | *(empty)* | Per-TTY bg color file pattern. Use `{tty}` placeholder |
 
+## Stop Suppression
+
+Since v2.1.145, Claude Code's Stop hook can report `background_tasks` and `session_crons` — work that's still running after the visible turn ends. Flashy suppresses the stop pulse when either is non-empty, so you're not told "done" while something's still in flight. Notification pulses are unaffected, since they're driven by Claude Code's own idle/prompt detection, not turn completion.
+
+Flashy only hooks the top-level `Stop` event, not `SubagentStop` — a flash per subagent would be noisy, and `Stop` already covers "Claude is done."
+
 ## Terminal Compatibility
 
 | Terminal | Auto-detect | Flash | Notes |
@@ -63,6 +69,7 @@ cp /path/to/flashy/config.default ~/.config/flashy/config
 **I don't see any flash**
 - Check the compatibility table above. Terminal.app isn't supported.
 - Try setting `FALLBACK_COLOR` in your config to your terminal's actual background color.
+- For Stop events specifically: if Claude Code reports background tasks or session crons still running, Flashy intentionally suppresses the pulse — see [Stop Suppression](#stop-suppression).
 
 **Flash color doesn't restore properly**
 - Set `FALLBACK_COLOR` to your terminal's background color, or use `BG_COLOR_FILE` if you have a multi-theme setup.
@@ -78,12 +85,13 @@ cp /path/to/flashy/config.default ~/.config/flashy/config
 
 1. Claude Code fires a Stop or Notification hook event
 2. `flash.sh` loads config from `~/.config/flashy/config` (if it exists)
-3. Detects your terminal's current background color via:
+3. For Stop events, checks whether background tasks or session crons are still running (see [Stop Suppression](#stop-suppression)) — if so, exits without flashing
+4. Detects your terminal's current background color via:
    - Per-TTY color file (if configured)
    - OSC 11 terminal query (auto-detect)
    - Static fallback color
-4. Computes perceived luminance — dark themes get a lighter flash, light themes get a darker flash
-5. Pulses: sets bg → flash color, sleeps, restores original bg
+5. Computes perceived luminance — dark themes get a lighter flash, light themes get a darker flash
+6. Pulses: sets bg → flash color, sleeps, restores original bg
 
 ## License
 

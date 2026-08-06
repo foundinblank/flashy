@@ -27,6 +27,47 @@ case "$1" in
   *)            COUNT=1 ;;
 esac
 
+# --- Stop-event suppression when background work is still running ---
+# Claude Code v2.1.145+ includes `background_tasks` and `session_crons`
+# arrays in the Stop hook's stdin JSON when background agents or scheduled
+# crons are still active. Flashing "done" while those are still running is
+# misleading, so we suppress the stop pulse when either array is confidently
+# non-empty. There's no Notification-side equivalent to read, and Flashy
+# doesn't hook SubagentStop at all — the Stop hook already fires once per
+# top-level turn, and per-subagent flashes would just be noise.
+#
+# Only reads stdin when it's not a TTY, so manual `./hooks/flash.sh stop`
+# from an interactive shell never blocks waiting on input.
+SUPPRESS_STOP=0
+if [ "$1" = "stop" ] && [ ! -t 0 ]; then
+  STOP_HOOK_JSON=$(cat 2>/dev/null)
+  # Narrow, best-effort scan for a literal top-level `"key": [ ... ]` shape —
+  # not a JSON parser. Anything else (missing key, empty array, malformed
+  # JSON, non-array value) is treated as "not suppressed" (fail open).
+  # The pattern only matches when the array's first non-whitespace character
+  # isn't `]`, so a whitespace-only/empty array correctly fails to match.
+  SUPPRESS_PATTERN='"(background_tasks|session_crons)"[[:space:]]*:[[:space:]]*\[[[:space:]]*[^][:space:]]'
+  if [ -n "$STOP_HOOK_JSON" ] && [[ "$STOP_HOOK_JSON" =~ $SUPPRESS_PATTERN ]]; then
+    SUPPRESS_STOP=1
+  fi
+fi
+
+# --- Test seam (narrow, explicit, guarded) ---
+# Activates only when FLASHY_TEST_SEAM equals this exact non-trivial token —
+# never a plausible value ("1"/"true") that could be set by accident via an
+# inherited env var — so tests can assert on the real suppress/pulse decision
+# without touching /dev/tty or asserting on sleep timing.
+if [ "${FLASHY_TEST_SEAM:-}" = "flashy-test-seam-do-not-set-manually-9f13c2" ]; then
+  if [ "$SUPPRESS_STOP" = "1" ]; then
+    echo "FLASHY_TEST_RESULT=SUPPRESSED"
+  else
+    echo "FLASHY_TEST_RESULT=PULSE count=$COUNT"
+  fi
+  exit 0
+fi
+
+[ "$SUPPRESS_STOP" = "1" ] && exit 0
+
 # --- Background color detection (three-tier) ---
 
 # Tier 1: Read from per-TTY color file
