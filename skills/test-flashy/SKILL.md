@@ -6,6 +6,8 @@ user-invocable: true
 
 You are testing the Flashy plugin, which flashes the terminal background when Claude finishes a turn.
 
+Note: since v0.2.0, Flashy suppresses the Stop flash if Claude Code reports background agents or scheduled crons still running. If you have any of those active in this session, you may not see the Step 1 flash — that's expected, not a bug.
+
 **Step 1 — Trigger a Stop event (1 flash)**
 
 Say exactly this and nothing else — do not add any other text, explanation, or follow-up:
